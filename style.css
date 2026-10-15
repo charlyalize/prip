@@ -1,0 +1,293 @@
+:root {
+    --bg-dark: #070a12;
+    --bg-card: #111827;
+    --primary: #ffd000;
+    --primary-glow: rgba(255, 208, 0, 0.2);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: #1f2937;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    border-bottom: 1px solid var(--border);
+    background: rgba(7, 10, 18, 0.85);
+    backdrop-filter: blur(12px);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-main);
+}
+.logo span { color: var(--primary); }
+
+.logo-wave {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 20px;
+    margin-left: 6px;
+}
+.logo-bar {
+    width: 3px;
+    background-color: var(--primary);
+    border-radius: 2px;
+    animation: pulse-wave 1.5s infinite ease-in-out;
+}
+.logo-bar:nth-child(1) { height: 40%; animation-delay: 0.1s; }
+.logo-bar:nth-child(2) { height: 90%; animation-delay: 0.3s; }
+.logo-bar:nth-child(3) { height: 60%; animation-delay: 0.2s; }
+
+@keyframes pulse-wave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.5); }
+}
+
+nav a {
+    color: var(--text-main);
+    text-decoration: none;
+    margin-left: 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+nav a:hover { color: var(--primary); }
+
+.hero {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    padding: 100px 5% 40px 5%;
+    background: radial-gradient(circle at 75% 30%, rgba(255, 208, 0, 0.04) 0%, transparent 60%);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.hero-text h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+}
+.hero-text h1 span { color: var(--primary); }
+.hero-text p {
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    margin-bottom: 40px;
+    max-width: 520px;
+}
+
+/* Simulador PTT */
+.device {
+    background-color: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 36px;
+    width: 310px;
+    padding: 35px 28px;
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    position: relative;
+    margin: 0 auto;
+}
+
+.device-screen {
+    background-color: #030508;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    height: 150px;
+    margin-bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.status-dot {
+    width: 14px;
+    height: 14px;
+    background-color: #374151;
+    border-radius: 50%;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+.status-dot.active {
+    background-color: #10b981;
+    box-shadow: 0 0 16px 4px rgba(16, 185, 129, 0.4);
+}
+
+.screen-text {
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+}
+
+.timer {
+    font-family: monospace;
+    font-size: 1.2rem;
+    color: #475569;
+    margin-top: 8px;
+    font-weight: bold;
+}
+.timer.active {
+    color: #ef4444;
+}
+
+.ptt-wrapper {
+    position: relative;
+    display: inline-block;
+    border-radius: 50%;
+}
+.ptt-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border-radius: 50%;
+    border: 4px solid var(--primary);
+    opacity: 0;
+    z-index: 1;
+    transform: scale(1);
+    pointer-events: none;
+}
+.ptt-wrapper.animating::after {
+    animation: radar-glow 1.2s infinite ease-out;
+}
+
+@keyframes radar-glow {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+
+.ptt-button {
+    position: relative;
+    z-index: 2;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: 8px solid var(--bg-dark);
+    background: linear-gradient(135deg, var(--primary) 0%, #e6bc00 100%);
+    color: #000;
+    font-weight: 900;
+    font-size: 1.2rem;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 0 0 4px var(--primary), 0 20px 40px rgba(255, 208, 0, 0.15);
+    user-select: none;
+    -webkit-user-select: none;
+}
+.ptt-button:active, .ptt-button.active {
+    transform: scale(0.93);
+    background: #d4ae00;
+}
+
+.hint { margin-top: 24px; font-size: 0.85rem; color: var(--text-muted); }
+
+/* Nueva Sección de Comentarios de Audio */
+.feed-section {
+    padding: 60px 5%;
+    background-color: #0b111e;
+    border-top: 1px solid var(--border);
+}
+.feed-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+.feed-container h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+.audio-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+/* Tarjeta del mensaje de audio */
+.audio-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slide-in 0.3s ease-out;
+}
+
+@keyframes slide-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.audio-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.audio-card-title {
+    font-weight: bold;
+    font-size: 0.95rem;
+}
+.audio-card-time {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Personalización del reproductor HTML nativo */
+audio {
+    height: 40px;
+    border-radius: 8px;
+}
+
+footer {
+    text-align: center;
+    padding: 40px 0;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+@media (max-width: 968px) {
+    .hero-grid { grid-template-columns: 1fr; text-align: center; }
+    .hero-text h1 { font-size: 3rem; }
+    .hero { padding-top: 120px; }
+}
