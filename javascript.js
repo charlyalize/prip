@@ -2,7 +2,7 @@
 const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvaHZha2ZxdGdyamhtbGh1cHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzY5ODUsImV4cCI6MjEwNzY1Mjk4NX0.cAaMLDIokEmX6h6aYNEhSX364aXILvnmRglMfja5qAA";
 
-// Inicialización corregida acoplando el objeto global del navegador de forma segura
+// Inicialización blindada llamando al objeto nativo local
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let audioCtx = null;
@@ -27,7 +27,6 @@ const screenLabel = document.getElementById('screenLabel');
 const recordingTimer = document.getElementById('recordingTimer');
 const audioFeed = document.getElementById('audioFeed');
 
-// El sonido triple Prip nativo tuyo
 function playChirp(callback) {
     initAudio();
     const startTime = audioCtx.currentTime;
@@ -85,7 +84,6 @@ async function handlePressStart() {
             const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
             const fileName = `prip-${Date.now()}.mp3`;
 
-            // 1. Envío físico del archivo de voz
             const { data: storageData, error: storageError } = await supabase.storage
                 .from('audios')
                 .upload(fileName, audioBlob);
@@ -96,10 +94,8 @@ async function handlePressStart() {
                 return;
             }
 
-            // Capturar la URL pública de descarga
             const { data: { publicUrl } } = supabase.storage.from('audios').getPublicUrl(fileName);
 
-            // 2. Registro estructural en PostgreSQL
             const { error: dbError } = await supabase
                 .from('transmisiones')
                 .insert([{ audio_url: publicUrl }]);
@@ -170,7 +166,6 @@ function resetTimerDisplay() {
     recordingTimer.textContent = "00:15";
 }
 
-// Descarga en vivo y listado de la base de datos distribuida
 async function renderMessages() {
     const { data: transmisiones, error } = await supabase
         .from('transmisiones')
@@ -205,7 +200,6 @@ async function renderMessages() {
     });
 }
 
-// Disparadores
 pttButton.addEventListener('mousedown', (e) => { e.preventDefault(); handlePressStart(); });
 window.addEventListener('mouseup', handlePressEnd);
 pttButton.addEventListener('touchstart', (e) => { e.preventDefault(); handlePressStart(); });
