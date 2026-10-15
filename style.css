@@ -111,7 +111,7 @@ nav a:hover { color: var(--primary); }
     max-width: 520px;
 }
 
-/* Simulador PTT */
+/* Simulador */
 .device {
     background-color: var(--bg-card);
     border: 2px solid var(--border);
@@ -165,9 +165,7 @@ nav a:hover { color: var(--primary); }
     margin-top: 8px;
     font-weight: bold;
 }
-.timer.active {
-    color: #ef4444;
-}
+.timer.active { color: #ef4444; }
 
 .ptt-wrapper {
     position: relative;
@@ -218,7 +216,7 @@ nav a:hover { color: var(--primary); }
 
 .hint { margin-top: 24px; font-size: 0.85rem; color: var(--text-muted); }
 
-/* Nueva Sección de Comentarios de Audio */
+/* Feedback Global */
 .feed-section {
     padding: 60px 5%;
     background-color: #0b111e;
@@ -242,7 +240,6 @@ nav a:hover { color: var(--primary); }
     padding-right: 8px;
 }
 
-/* Tarjeta del mensaje de audio */
 .audio-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border);
@@ -264,16 +261,9 @@ nav a:hover { color: var(--primary); }
     flex-direction: column;
     gap: 4px;
 }
-.audio-card-title {
-    font-weight: bold;
-    font-size: 0.95rem;
-}
-.audio-card-time {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
+.audio-card-title { font-weight: bold; font-size: 0.95rem; }
+.audio-card-time { font-size: 0.8rem; color: var(--text-muted); }
 
-/* Personalización del reproductor HTML nativo */
 audio {
     height: 40px;
     border-radius: 8px;

@@ -1,8 +1,9 @@
-// --- CONFIGURACIÓN DE SUPABASE ---
-// Reemplazá estos valores con los que te da Supabase en Settings -> API
-const SUPABASE_URL = "https://lohvakfqtgrjhmlhupxi.supabase.co";
+// --- CONFIGURACIÓN DE SUPABASE GLOBAL ---
+const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvaHZha2ZxdGdyamhtbGh1cHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzY5ODUsImV4cCI6MjEwNzY1Mjk4NX0.cAaMLDIokEmX6h6aYNEhSX364aXILvnmRglMfja5qAA";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Inicialización corregida acoplando el objeto de la ventana del navegador
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let audioCtx = null;
 let mediaRecorder = null;
@@ -26,6 +27,7 @@ const screenLabel = document.getElementById('screenLabel');
 const recordingTimer = document.getElementById('recordingTimer');
 const audioFeed = document.getElementById('audioFeed');
 
+// El sonido triple Prip nativo
 function playChirp(callback) {
     initAudio();
     const startTime = audioCtx.currentTime;
@@ -83,21 +85,21 @@ async function handlePressStart() {
             const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
             const fileName = `prip-${Date.now()}.mp3`;
 
-            // 1. Subir el archivo de audio físico al Storage de Supabase
+            // 1. Envío físico del archivo de voz
             const { data: storageData, error: storageError } = await supabase.storage
                 .from('audios')
                 .upload(fileName, audioBlob);
 
             if (storageError) {
-                console.error("Error subiendo audio:", storageError);
+                console.error("Error en storage:", storageError);
                 screenLabel.textContent = "ERR: STORAGE";
                 return;
             }
 
-            // Conseguir la URL pública del archivo subido
+            // Capturar la URL pública de descarga
             const { data: { publicUrl } } = supabase.storage.from('audios').getPublicUrl(fileName);
 
-            // 2. Guardar el registro en la base de datos estructurada
+            // 2. Registro estructural en PostgreSQL
             const { error: dbError } = await supabase
                 .from('transmisiones')
                 .insert([{ audio_url: publicUrl }]);
@@ -108,7 +110,7 @@ async function handlePressStart() {
             } else {
                 screenLabel.textContent = "PRIP LISTO";
                 screenLabel.style.color = "var(--text-muted)";
-                renderMessages(); // Refrescar la lista global
+                renderMessages(); 
             }
 
             stream.getTracks().forEach(track => track.stop());
@@ -129,7 +131,7 @@ async function handlePressStart() {
         });
 
     } catch (err) {
-        console.error("Micrófono denegado o error:", err);
+        console.error("Micrófono denegado:", err);
         screenLabel.textContent = "ERR: SIN MIC";
         screenLabel.style.color = "#ef4444";
         isPressed = false;
@@ -168,9 +170,8 @@ function resetTimerDisplay() {
     recordingTimer.textContent = "00:15";
 }
 
-// NUEVO: Renderizar mensajes bajándolos directamente de la nube global de Supabase
+// Descarga en vivo y listado de la base de datos distribuida
 async function renderMessages() {
-    // Traer las últimas 20 transmisiones ordenadas por fecha reciente
     const { data: transmisiones, error } = await supabase
         .from('transmisiones')
         .select('*')
@@ -178,7 +179,7 @@ async function renderMessages() {
         .limit(20);
 
     if (error) {
-        console.error("Error cargando transmisiones:", error);
+        console.error("Error cargando base de datos:", error);
         return;
     }
 
@@ -204,7 +205,7 @@ async function renderMessages() {
     });
 }
 
-// --- LISTENERS ---
+// Disparadores
 pttButton.addEventListener('mousedown', (e) => { e.preventDefault(); handlePressStart(); });
 window.addEventListener('mouseup', handlePressEnd);
 pttButton.addEventListener('touchstart', (e) => { e.preventDefault(); handlePressStart(); });
@@ -213,5 +214,4 @@ pttButton.addEventListener('touchend', (e) => { e.preventDefault(); handlePressE
 window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); handlePressStart(); } });
 window.addEventListener('keyup', (e) => { if (e.code === 'Space') handlePressEnd(); });
 
-// Carga inicial global
 renderMessages();
