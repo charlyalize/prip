@@ -1,3 +1,9 @@
+// --- CONFIGURACIÓN DE SUPABASE ---
+// Reemplazá estos valores con los que te da Supabase en Settings -> API
+const SUPABASE_URL = "https://lohvakfqtgrjhmlhupxi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvaHZha2ZxdGdyamhtbGh1cHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzY5ODUsImV4cCI6MjEwNzY1Mjk4NX0.cAaMLDIokEmX6h6aYNEhSX364aXILvnmRglMfja5qAA";
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let audioCtx = null;
 let mediaRecorder = null;
 let audioChunks = [];
@@ -20,7 +26,6 @@ const screenLabel = document.getElementById('screenLabel');
 const recordingTimer = document.getElementById('recordingTimer');
 const audioFeed = document.getElementById('audioFeed');
 
-// --- TU LOGA REPLICADA DEL ICÓNICO SONIDO "PRIP" ---
 function playChirp(callback) {
     initAudio();
     const startTime = audioCtx.currentTime;
@@ -40,7 +45,6 @@ function playChirp(callback) {
         }
 
         gainNode.gain.setValueAtTime(0, startTime);
-        
         const pulseStart = startTime + (i * (pulseDuration + silenceDuration));
         const pulseEnd = pulseStart + pulseDuration;
 
@@ -55,8 +59,6 @@ function playChirp(callback) {
         osc.start(pulseStart);
         osc.stop(pulseEnd + 0.01);
     }
-    
-    // Ejecuta la grabación después de que termine el pitido (aprox 200ms)
     if(callback) setTimeout(callback, 200);
 }
 
@@ -65,35 +67,53 @@ let isPressed = false;
 async function handlePressStart() {
     if (isPressed) return;
     isPressed = true;
-    
     initAudio();
 
-    // Pedir permiso y configurar micrófono
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
         audioChunks = [];
 
-        mediaRecorder.ondataavailable = (event) => {
-            audioChunks.push(event.data);
-        };
+        mediaRecorder.ondataavailable = (event) => { audioChunks.push(event.data); };
 
         mediaRecorder.onstop = async () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            screenLabel.textContent = "PROCESANDO...";
+            screenLabel.style.color = "#ffd000";
             
-            // Guardar localmente convirtiendo el blob a Base64
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = () => {
-                const base64Audio = reader.result;
-                saveAudioMessage(base64Audio);
-            };
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+            const fileName = `prip-${Date.now()}.mp3`;
 
-            // Detener el uso del hardware del micrófono
+            // 1. Subir el archivo de audio físico al Storage de Supabase
+            const { data: storageData, error: storageError } = await supabase.storage
+                .from('audios')
+                .upload(fileName, audioBlob);
+
+            if (storageError) {
+                console.error("Error subiendo audio:", storageError);
+                screenLabel.textContent = "ERR: STORAGE";
+                return;
+            }
+
+            // Conseguir la URL pública del archivo subido
+            const { data: { publicUrl } } = supabase.storage.from('audios').getPublicUrl(fileName);
+
+            // 2. Guardar el registro en la base de datos estructurada
+            const { error: dbError } = await supabase
+                .from('transmisiones')
+                .insert([{ audio_url: publicUrl }]);
+
+            if (dbError) {
+                console.error("Error en base de datos:", dbError);
+                screenLabel.textContent = "ERR: DB";
+            } else {
+                screenLabel.textContent = "PRIP LISTO";
+                screenLabel.style.color = "var(--text-muted)";
+                renderMessages(); // Refrescar la lista global
+            }
+
             stream.getTracks().forEach(track => track.stop());
         };
 
-        // Activación visual
         pttWrapper.classList.add('animating');
         pttButton.classList.add('active');
         statusDot.classList.add('active');
@@ -101,7 +121,6 @@ async function handlePressStart() {
         screenLabel.style.color = "#10b981";
         recordingTimer.classList.add('active');
 
-        // Suena el PRIP e inicia inmediatamente a grabar
         playChirp(() => {
             if (isPressed && mediaRecorder) {
                 mediaRecorder.start();
@@ -110,7 +129,7 @@ async function handlePressStart() {
         });
 
     } catch (err) {
-        console.error("Acceso al micrófono denegado:", err);
+        console.error("Micrófono denegado o error:", err);
         screenLabel.textContent = "ERR: SIN MIC";
         screenLabel.style.color = "#ef4444";
         isPressed = false;
@@ -127,27 +146,20 @@ function handlePressEnd() {
     pttWrapper.classList.remove('animating');
     pttButton.classList.remove('active');
     statusDot.classList.remove('active');
-    screenLabel.textContent = "PRIP LISTO";
-    screenLabel.style.color = "var(--text-muted)";
 
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
         mediaRecorder.stop();
-        playChirp(); // Pitido final de cierre
+        playChirp();
     }
 }
 
-// Control del Reloj Regresivo de 15 Segundos
 function startTimer() {
     timeLeft = 15;
     recordingTimer.textContent = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-    
     recordingInterval = setInterval(() => {
         timeLeft--;
         recordingTimer.textContent = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-        
-        if (timeLeft <= 0) {
-            handlePressEnd(); // Fuerza el corte al llegar a cero
-        }
+        if (timeLeft <= 0) handlePressEnd();
     }, 1000);
 }
 
@@ -156,40 +168,37 @@ function resetTimerDisplay() {
     recordingTimer.textContent = "00:15";
 }
 
-// Guardar y renderizar la caja de comentarios de audios
-function saveAudioMessage(base64Data) {
-    const messages = JSON.parse(localStorage.getItem('prip_messages') || '[]');
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    const newMessage = {
-        id: Date.now(),
-        time: timestamp,
-        audio: base64Data
-    };
+// NUEVO: Renderizar mensajes bajándolos directamente de la nube global de Supabase
+async function renderMessages() {
+    // Traer las últimas 20 transmisiones ordenadas por fecha reciente
+    const { data: transmisiones, error } = await supabase
+        .from('transmisiones')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    messages.unshift(newMessage); // El más nuevo primero
-    localStorage.setItem('prip_messages', JSON.stringify(messages));
-    renderMessages();
-}
-
-function renderMessages() {
-    audioFeed.innerHTML = '';
-    const messages = JSON.parse(localStorage.getItem('prip_messages') || '[]');
-
-    if(messages.length === 0) {
-        audioFeed.innerHTML = `<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">No hay transmisiones grabadas. ¡Sé el primero!</p>`;
+    if (error) {
+        console.error("Error cargando transmisiones:", error);
         return;
     }
 
-    messages.forEach((msg, index) => {
+    audioFeed.innerHTML = '';
+
+    if (!transmisiones || transmisiones.length === 0) {
+        audioFeed.innerHTML = `<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">No hay transmisiones globales grabadas. ¡Sé el primero!</p>`;
+        return;
+    }
+
+    transmisiones.forEach((msg, index) => {
+        const localTime = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const card = document.createElement('div');
         card.className = 'audio-card';
         card.innerHTML = `
             <div class="audio-card-info">
-                <div class="audio-card-title">Operador Prip #${messages.length - index}</div>
-                <div class="audio-card-time">Transmitido a las ${msg.time}</div>
+                <div class="audio-card-title">Operador Prip Global #${transmisiones.length - index}</div>
+                <div class="audio-card-time">Transmitido a las ${localTime}</div>
             </div>
-            <audio src="${msg.audio}" controls></audio>
+            <audio src="${msg.audio_url}" controls></audio>
         `;
         audioFeed.appendChild(card);
     });
@@ -204,5 +213,5 @@ pttButton.addEventListener('touchend', (e) => { e.preventDefault(); handlePressE
 window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); handlePressStart(); } });
 window.addEventListener('keyup', (e) => { if (e.code === 'Space') handlePressEnd(); });
 
-// Render inicial al cargar la página
+// Carga inicial global
 renderMessages();

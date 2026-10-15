@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prip | Comunicación Instantánea Corporativa</title>
     <link rel="stylesheet" href="style.css">
+    <!-- NUEVO: Librería oficial de Supabase para conectar la base de datos -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
@@ -36,7 +38,6 @@
                     <div class="device-screen">
                         <div class="status-dot" id="statusDot"></div>
                         <div class="screen-text" id="screenLabel">PRIP LISTO</div>
-                        <!-- Contador de segundos de grabación -->
                         <div class="timer" id="recordingTimer">00:15</div>
                     </div>
                     
@@ -50,13 +51,12 @@
         </div>
     </section>
 
-    <!-- Nueva sección: Cajita de comentarios de audio -->
     <section class="feed-section">
         <div class="feed-container">
             <h2>🔊 Transmisiones Recientes</h2>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">Escuchá la buena onda de la comunidad Prip</p>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Escuchá la buena onda de la comunidad Prip en tiempo real</p>
             <div class="audio-feed" id="audioFeed">
-                <!-- Los audios se insertarán acá dinámicamente -->
+                <!-- Los audios se insertarán acá dinámicamente desde el servidor -->
             </div>
         </div>
     </section>
