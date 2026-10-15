@@ -1,11 +1,9 @@
-// --- CONFIGURACIÓN DE SUPABASE GLOBAL CORREGIDA ---
-// Forzamos tu ID de proyecto real (lohvakfqtgrjhmlhupxi) para evitar los bloqueos de CORS
+// --- CONFIGURACIÓN DE SUPABASE GLOBAL ---
 const SUPABASE_URL = "https://lohvakfqtgrjhmlhupxi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvaHZha2ZxdGdyamhtbGh1cHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzY5ODUsImV4cCI6MjEwNzY1Mjk4NX0.cAaMLDIokEmX6h6aYNEhSX364aXILvnmRglMfja5qAA";
 
 // Inicialización acoplando el objeto de la librería local
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 
 let audioCtx = null;
 let mediaRecorder = null;
@@ -29,6 +27,7 @@ const screenLabel = document.getElementById('screenLabel');
 const recordingTimer = document.getElementById('recordingTimer');
 const audioFeed = document.getElementById('audioFeed');
 
+// El sonido triple Prip nativo tuyo
 function playChirp(callback) {
     initAudio();
     const startTime = audioCtx.currentTime;
@@ -74,7 +73,14 @@ async function handlePressStart() {
 
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        
+        // CORRECCIÓN: Detectamos qué formato soporta el navegador actual (móvil o PC) para evitar rechazos
+        let options = { mimeType: 'audio/webm' };
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/ogg' };
+        }
+        
+        mediaRecorder = new MediaRecorder(stream, options);
         audioChunks = [];
 
         mediaRecorder.ondataavailable = (event) => { audioChunks.push(event.data); };
@@ -83,12 +89,20 @@ async function handlePressStart() {
             screenLabel.textContent = "PROCESANDO...";
             screenLabel.style.color = "#ffd000";
             
-            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-            const fileName = `prip-${Date.now()}.mp3`;
+            // CORRECCIÓN: Creamos el blob con el tipo nativo correcto que el navegador grabó
+            const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+            
+            // CORRECCIÓN: Cambiamos la extensión final del nombre del archivo a .webm
+            const fileName = `prip-${Date.now()}.webm`;
 
+            // 1. Envío físico del archivo de voz
             const { data: storageData, error: storageError } = await supabase.storage
                 .from('audios')
-                .upload(fileName, audioBlob);
+                .upload(fileName, audioBlob, {
+                    cacheControl: '3600',
+                    upsert: false,
+                    contentType: mediaRecorder.mimeType // Forzamos a Supabase a entender qué archivo le llega
+                });
 
             if (storageError) {
                 console.error("Error en storage:", storageError);
@@ -96,8 +110,10 @@ async function handlePressStart() {
                 return;
             }
 
+            // Capturar la URL pública de descarga
             const { data: { publicUrl } } = supabase.storage.from('audios').getPublicUrl(fileName);
 
+            // 2. Registro estructural en PostgreSQL
             const { error: dbError } = await supabase
                 .from('transmisiones')
                 .insert([{ audio_url: publicUrl }]);
@@ -168,6 +184,7 @@ function resetTimerDisplay() {
     recordingTimer.textContent = "00:15";
 }
 
+// Descarga en vivo y listado de la base de datos distribuida
 async function renderMessages() {
     const { data: transmisiones, error } = await supabase
         .from('transmisiones')
@@ -202,6 +219,7 @@ async function renderMessages() {
     });
 }
 
+// Disparadores
 pttButton.addEventListener('mousedown', (e) => { e.preventDefault(); handlePressStart(); });
 window.addEventListener('mouseup', handlePressEnd);
 pttButton.addEventListener('touchstart', (e) => { e.preventDefault(); handlePressStart(); });
