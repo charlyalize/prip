@@ -2,7 +2,7 @@
 const SUPABASE_URL = "https://supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvaHZha2ZxdGdyamhtbGh1cHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzY5ODUsImV4cCI6MjEwNzY1Mjk4NX0.cAaMLDIokEmX6h6aYNEhSX364aXILvnmRglMfja5qAA";
 
-// Inicialización corregida acoplando el objeto de la ventana del navegador
+// Inicialización corregida acoplando el objeto global del navegador de forma segura
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let audioCtx = null;
@@ -27,7 +27,7 @@ const screenLabel = document.getElementById('screenLabel');
 const recordingTimer = document.getElementById('recordingTimer');
 const audioFeed = document.getElementById('audioFeed');
 
-// El sonido triple Prip nativo
+// El sonido triple Prip nativo tuyo
 function playChirp(callback) {
     initAudio();
     const startTime = audioCtx.currentTime;
@@ -209,7 +209,7 @@ async function renderMessages() {
 pttButton.addEventListener('mousedown', (e) => { e.preventDefault(); handlePressStart(); });
 window.addEventListener('mouseup', handlePressEnd);
 pttButton.addEventListener('touchstart', (e) => { e.preventDefault(); handlePressStart(); });
-pttButton.addEventListener('touchend', (e) => { e.preventDefault(); handlePressEnd(); });
+pttButton.addEventListener('touchend', handlePressEnd);
 
 window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); handlePressStart(); } });
 window.addEventListener('keyup', (e) => { if (e.code === 'Space') handlePressEnd(); });
