@@ -1,9 +1,11 @@
-// --- CONFIGURACIÓN DE SUPABASE GLOBAL ---
-const SUPABASE_URL = "https://supabase.co";
+// --- CONFIGURACIÓN DE SUPABASE GLOBAL CORREGIDA ---
+// Forzamos tu ID de proyecto real (lohvakfqtgrjhmlhupxi) para evitar los bloqueos de CORS
+const SUPABASE_URL = "https://lohvakfqtgrjhmlhupxi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxvaHZha2ZxdGdyamhtbGh1cHhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNzY5ODUsImV4cCI6MjEwNzY1Mjk4NX0.cAaMLDIokEmX6h6aYNEhSX364aXILvnmRglMfja5qAA";
 
-// Inicialización blindada llamando al objeto nativo local
+// Inicialización acoplando el objeto de la librería local
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 let audioCtx = null;
 let mediaRecorder = null;
